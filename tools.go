@@ -168,7 +168,6 @@ func (t *Tools) CreateDirIfNotExist(path string) error {
 	return nil
 }
 
-// Slugify is a (very) simple means of creating a slug from a provided string.
 func (t *Tools) Slugify(s string) (string, error) {
 	if s == "" {
 		return "", errors.New("empty string not permitted")
@@ -182,8 +181,6 @@ func (t *Tools) Slugify(s string) (string, error) {
 	return slug, nil
 }
 
-// WriteXML takes a response status code and arbitrary data and writes an XML response to the client.
-// The Content-Type header is set to application/xml.
 func (t *Tools) WriteXML(w http.ResponseWriter, status int, data interface{}, headers ...http.Header) error {
 	out, err := xml.Marshal(data)
 	if err != nil {
@@ -232,8 +229,6 @@ func (t *Tools) ReadXML(w http.ResponseWriter, r *http.Request, data interface{}
 	return nil
 }
 
-// ErrorXML takes an error, and optionally a response status code, and generates and sends
-// an XML error response.
 func (t *Tools) ErrorXML(w http.ResponseWriter, err error, status ...int) error {
 	statusCode := http.StatusBadRequest
 
