@@ -1,6 +1,7 @@
 package toolkit
 
 import (
+	"errors"
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"image"
@@ -133,4 +134,43 @@ func TestTools_UploadOneFile(t *testing.T) {
 
 	_ = os.Remove(fmt.Sprintf("./testdata/uploads/%s", uploadedFiles.NewFileName))
 
+}
+
+func TestTools_CreateDirIfNotExist(t *testing.T) {
+	var testTool Tools
+
+	err := testTool.CreateDirIfNotExist("./testdata/myDir")
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = testTool.CreateDirIfNotExist("./testdata/myDir")
+	if err != nil {
+		t.Error(err)
+	}
+
+	_ = os.Remove("./testdata/myDir")
+}
+
+func TestTools_CreateDirIfNotExistInvalidDirectory(t *testing.T) {
+	var testTool Tools
+
+	// we should not be able to create a directory at the root level (no permissions)
+	err := testTool.CreateDirIfNotExist("/mydir")
+	if err == nil {
+		t.Error(errors.New("able to create a directory where we should not be able to"))
+	}
+}
+
+var slugTests = []struct {
+	name          string
+	s             string
+	expected      string
+	errorExpected bool
+}{
+	{name: "valid string", s: "now is the time", expected: "now-is-the-time", errorExpected: false},
+	{name: "empty string", s: "", expected: "", errorExpected: true},
+	{name: "complex string", s: "Now is the time for all GOOD men! + Fish & such &^?123", expected: "now-is-the-time-for-all-good-men-fish-such-123", errorExpected: false},
+	{name: "japanese string", s: "こんにちは世界", expected: "", errorExpected: true},
+	{name: "japanese string plus roman characters", s: "こんにちは世界 hello world", expected: "hello-world", errorExpected: false},
 }

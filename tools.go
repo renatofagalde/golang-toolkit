@@ -2,20 +2,30 @@ package toolkit
 
 import (
 	"crypto/rand"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
 const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_+"
+const defaultMaxUpload = 10485760
 
 type Tools struct {
-	MaxFileSize       int
-	AllowedFilesTypes []string
+	AllowedFilesTypes  []string
+	MaxJSONSize        int
+	MaxXMLSize         int
+	MaxFileSize        int
+	AllowedFileTypes   []string
+	AllowUnknownFields bool
+	ErrorLog           *log.Logger
+	InfoLog            *log.Logger
 }
 
 func (t *Tools) RandomString(n int) string {
@@ -32,6 +42,18 @@ type UploadFile struct {
 	NewFileName      string
 	OriginalFileName string
 	FileSize         int64
+}
+
+type JSONResponse struct {
+	Error   bool        `json:"error"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
+type XMLResponse struct {
+	Error   bool        `xml:"error"`
+	Message string      `xml:"message"`
+	Data    interface{} `xml:"data,omitempty"`
 }
 
 func (t *Tools) UploadOneFile(r *http.Request, uploadDir string, rename ...bool) (*UploadFile, error) {
@@ -57,7 +79,13 @@ func (t *Tools) UploadFiles(r *http.Request, uploadDir string, rename ...bool) (
 	if t.MaxFileSize == 0 {
 		t.MaxFileSize = 1024 * 1024 * 1024
 	}
-	err := r.ParseMultipartForm(int64(t.MaxFileSize))
+
+	err := t.CreateDirIfNotExist(uploadDir)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.ParseMultipartForm(int64(t.MaxFileSize))
 	if err != nil {
 		return nil, errors.New("the upload file is too big")
 	}
@@ -127,4 +155,96 @@ func (t *Tools) UploadFiles(r *http.Request, uploadDir string, rename ...bool) (
 		}
 	}
 	return uploadedFiles, nil
+}
+
+func (t *Tools) CreateDirIfNotExist(path string) error {
+	const mode = 0755
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		err := os.MkdirAll(path, mode)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Slugify is a (very) simple means of creating a slug from a provided string.
+func (t *Tools) Slugify(s string) (string, error) {
+	if s == "" {
+		return "", errors.New("empty string not permitted")
+	}
+	var re = regexp.MustCompile(`[^a-z\d]+`)
+	slug := strings.Trim(re.ReplaceAllString(strings.ToLower(s), "-"), "-")
+	if len(slug) == 0 {
+		return "", errors.New("after removing characters, slug is zero length")
+	}
+
+	return slug, nil
+}
+
+// WriteXML takes a response status code and arbitrary data and writes an XML response to the client.
+// The Content-Type header is set to application/xml.
+func (t *Tools) WriteXML(w http.ResponseWriter, status int, data interface{}, headers ...http.Header) error {
+	out, err := xml.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	// If we have a value as the last parameter in the function call, then we are setting a custom header.
+	if len(headers) > 0 {
+		for key, value := range headers[0] {
+			w.Header()[key] = value
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/xml")
+	w.WriteHeader(status)
+
+	// Add the XML header.
+	xmlOut := []byte(xml.Header + string(out))
+	_, _ = w.Write(xmlOut)
+
+	return nil
+}
+
+func (t *Tools) ReadXML(w http.ResponseWriter, r *http.Request, data interface{}) error {
+	maxBytes := defaultMaxUpload
+
+	// If MaxXMLSize is set, use that value instead of default.
+	if t.MaxXMLSize != 0 {
+		maxBytes = t.MaxXMLSize
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
+
+	dec := xml.NewDecoder(r.Body)
+
+	// Attempt to decode the data.
+	err := dec.Decode(data)
+	if err != nil {
+		return err
+	}
+
+	err = dec.Decode(&struct{}{})
+	if err != io.EOF {
+		return errors.New("body must only contain a single XML value")
+	}
+
+	return nil
+}
+
+// ErrorXML takes an error, and optionally a response status code, and generates and sends
+// an XML error response.
+func (t *Tools) ErrorXML(w http.ResponseWriter, err error, status ...int) error {
+	statusCode := http.StatusBadRequest
+
+	// If a custom response code is specified, use that instead of bad request.
+	if len(status) > 0 {
+		statusCode = status[0]
+	}
+
+	var payload XMLResponse
+	payload.Error = true
+	payload.Message = err.Error()
+
+	return t.WriteXML(w, statusCode, payload)
 }
