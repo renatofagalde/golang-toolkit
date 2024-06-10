@@ -59,6 +59,14 @@ type XMLResponse struct {
 	Data    interface{} `xml:"data,omitempty"`
 }
 
+type Config struct {
+	DBDriver            string        `mapstructure:"DB_DRIVER"`
+	DBSource            string        `mapstructure:"DB_SOURCE"`
+	ServerAddress       string        `mapstructure:"SERVER_ADDRESS"`
+	TokenSymmetricKey   string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
+	AccessTokenDuration time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+}
+
 func (t *Tools) UploadOneFile(r *http.Request, uploadDir string, rename ...bool) (*UploadFile, error) {
 	renameFile := true
 	if len(rename) > 0 {
@@ -250,14 +258,6 @@ func (t *Tools) ErrorXML(w http.ResponseWriter, err error, status ...int) error 
 	payload.Message = err.Error()
 
 	return t.WriteXML(w, statusCode, payload)
-}
-
-type Config struct {
-	DBDriver            string        `mapstructure:"DB_DRIVER"`
-	DBSource            string        `mapstructure:"DB_SOURCE"`
-	ServerAddress       string        `mapstructure:"SERVER_ADDRESS"`
-	TokenSymmetricKey   string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
-	AccessTokenDuration time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 }
 
 func (t *Tools) LoadConfig(path string) (config Config, err error) {
