@@ -15,7 +15,7 @@ type Cause struct {
 }
 
 // construtor
-func NewRestErr(message, err string, code int, causes []Cause) *RestErr {
+func (t *RestErr) NewRestErr(message, err string, code int, causes []Cause) *RestErr {
 	return &RestErr{
 		Message: message,
 		Err:     err,
@@ -29,7 +29,7 @@ func (r *RestErr) Error() string {
 }
 
 // bad request
-func NewBadRequestError(message string) *RestErr {
+func (t *RestErr) NewBadRequestError(message string) *RestErr {
 	return &RestErr{
 		Message: message,
 		Err:     "bad_request",
@@ -38,7 +38,7 @@ func NewBadRequestError(message string) *RestErr {
 }
 
 // badrequest validando objeto
-func NewBadRequestValidationError(message string, causes []Cause) *RestErr {
+func (t *RestErr) NewBadRequestValidationError(message string, causes []Cause) *RestErr {
 	return &RestErr{
 		Message: message,
 		Err:     "bad_request",
@@ -48,7 +48,7 @@ func NewBadRequestValidationError(message string, causes []Cause) *RestErr {
 }
 
 // erro interno
-func NewInternalServerError(message string) *RestErr {
+func (t *RestErr) NewInternalServerError(message string) *RestErr {
 	return &RestErr{
 		Message: message,
 		Err:     "internal_server_error",
@@ -57,7 +57,7 @@ func NewInternalServerError(message string) *RestErr {
 }
 
 // forbidden
-func NewForbiddenError(message string) *RestErr {
+func (t *RestErr) NewForbiddenError(message string) *RestErr {
 	return &RestErr{
 		Message: message,
 		Err:     "forbidden",
@@ -66,7 +66,7 @@ func NewForbiddenError(message string) *RestErr {
 }
 
 // notfound error
-func NewNotFoundError(message string) *RestErr {
+func (t *RestErr) NewNotFoundError(message string) *RestErr {
 	return &RestErr{
 		Message: message,
 		Err:     "notFound",
@@ -74,7 +74,7 @@ func NewNotFoundError(message string) *RestErr {
 	}
 }
 
-func NewUnauthorizedRequestError(message string) *RestErr {
+func (t *RestErr) NewUnauthorizedRequestError(message string) *RestErr {
 	return &RestErr{
 		Message: message,
 		Err:     "unauthorizes",
