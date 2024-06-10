@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -27,8 +26,8 @@ type Tools struct {
 	MaxFileSize        int
 	AllowedFileTypes   []string
 	AllowUnknownFields bool
-	ErrorLog           *log.Logger
-	InfoLog            *log.Logger
+	ErrorLog           *Logger
+	InfoLog            *Logger
 }
 
 func (t *Tools) RandomString(n int) string {
