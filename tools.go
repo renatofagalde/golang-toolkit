@@ -276,9 +276,9 @@ func (t *Tools) LoadConfig(path string) (config Config, err error) {
 }
 
 func (t *Tools) buildDBSource(defaultDBSource string) string {
-	dbUser := viper.GetString("app_database_user")
-	dbPassword := viper.GetString("app_database_password")
-	dbURL := viper.GetString("app_database_url")
+	dbUser := os.Getenv("app_database_user")
+	dbPassword := os.Getenv("app_database_password")
+	dbURL := os.Getenv("app_database_url")
 
 	//todas variaveis definidas
 	if dbUser != "" && dbPassword != "" && dbURL != "" {
