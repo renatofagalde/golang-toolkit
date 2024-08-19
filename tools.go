@@ -270,5 +270,20 @@ func (t *Tools) LoadConfig(path string) (config Config, err error) {
 		return
 	}
 	err = viper.Unmarshal(&config)
+
+	config.DBSource = t.buildDBSource(config.DBSource)
 	return
+}
+
+func (t *Tools) buildDBSource(defaultDBSource string) string {
+	dbUser := viper.GetString("app_database_user")
+	dbPassword := viper.GetString("app_database_password")
+	dbURL := viper.GetString("app_database_url")
+
+	//todas variaveis definidas
+	if dbUser != "" && dbPassword != "" && dbURL != "" {
+		return fmt.Sprintf("postgresql://%s:%s@%s", dbUser, dbPassword, dbURL)
+	}
+	// caso contrário, retorne o valor padrão do arquivo de configuração
+	return defaultDBSource
 }
