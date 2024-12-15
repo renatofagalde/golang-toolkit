@@ -1,4 +1,4 @@
-package contextManager
+package context_manager
 
 import (
 	headervalidators "bootstrap/src/config/context_manager/header_validators"
