@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func RequestIDMiddleware() gin.HandlerFunc {
+func RequestMiddleware() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
