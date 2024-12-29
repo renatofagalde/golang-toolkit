@@ -280,10 +280,19 @@ func (t *Tools) LoadConfigEnv() (config Config, err error) {
 	config.DBSource = os.Getenv("DB_SOURCE")
 	config.ServerAddress = os.Getenv("SERVER_ADDRESS")
 	config.TokenSymmetricKey = os.Getenv("TOKEN_SYMMETRIC_KEY")
-	config.AccessTokenDuration = os.Getenv("ACCESS_TOKEN_DURATION")
+	accessTokenDuration := os.Getenv("ACCESS_TOKEN_DURATION")
 
-	// Validar se os valores obrigatórios foram carregados
 	missing := []string{}
+
+	if accessTokenDuration != "" {
+		config.AccessTokenDuration, err = time.ParseDuration(accessTokenDuration)
+		if err != nil {
+			return config, fmt.Errorf("erro ao converter ACCESS_TOKEN_DURATION para time.Duration: %v", err)
+		}
+	} else {
+		missing = append(missing, "ACCESS_TOKEN_DURATION")
+	}
+
 	if config.DBDriver == "" {
 		missing = append(missing, "DB_DRIVER")
 	}
@@ -295,9 +304,6 @@ func (t *Tools) LoadConfigEnv() (config Config, err error) {
 	}
 	if config.TokenSymmetricKey == "" {
 		missing = append(missing, "TOKEN_SYMMETRIC_KEY")
-	}
-	if config.AccessTokenDuration == "" {
-		missing = append(missing, "ACCESS_TOKEN_DURATION")
 	}
 
 	if len(missing) > 0 {
