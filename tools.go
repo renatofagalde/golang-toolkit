@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/spf13/viper"
 	"io"
 	"net/http"
 	"os"
@@ -259,21 +258,21 @@ func (t *Tools) ErrorXML(w http.ResponseWriter, err error, status ...int) error 
 	return t.WriteXML(w, statusCode, payload)
 }
 
-func (t *Tools) LoadConfigFile(path string) (config Config, err error) {
-	viper.AddConfigPath(path)
-	viper.SetConfigName("app")
-	viper.SetConfigType("env")
-
-	viper.AutomaticEnv()
-	err = viper.ReadInConfig()
-	if err != nil {
-		return
-	}
-	err = viper.Unmarshal(&config)
-
-	config.DBSource = t.buildDBSource(config.DBSource)
-	return
-}
+//func (t *Tools) LoadConfigFile(path string) (config Config, err error) {
+//	viper.AddConfigPath(path)
+//	viper.SetConfigName("app")
+//	viper.SetConfigType("env")
+//
+//	viper.AutomaticEnv()
+//	err = viper.ReadInConfig()
+//	if err != nil {
+//		return
+//	}
+//	err = viper.Unmarshal(&config)
+//
+//	config.DBSource = t.buildDBSource(config.DBSource)
+//	return
+//}
 
 func (t *Tools) LoadConfigEnv() (config Config, err error) {
 	config.DBDriver = os.Getenv("DB_DRIVER")
@@ -310,18 +309,16 @@ func (t *Tools) LoadConfigEnv() (config Config, err error) {
 		err = fmt.Errorf("variáveis de ambiente obrigatórias não encontradas: %v", missing)
 		return
 	}
-
-	config.DBSource = t.buildDBSource(config.DBSource)
 	return
 }
 
-func (t *Tools) buildDBSource(defaultDBSource string) string {
-	dbUser := os.Getenv("app_database_user")
-	dbPassword := os.Getenv("app_database_password")
-	dbURL := os.Getenv("app_database_url")
-
-	if dbUser != "" && dbPassword != "" && dbURL != "" {
-		return fmt.Sprintf("postgresql://%s:%s@%s", dbUser, dbPassword, dbURL)
-	}
-	return defaultDBSource
-}
+//func (t *Tools) buildDBSource(config *Config) string {
+//	dbUser := os.Getenv("app_database_user")
+//	dbPassword := os.Getenv("app_database_password")
+//	dbURL := os.Getenv("app_database_url")
+//
+//	if dbUser != "" && dbPassword != "" && dbURL != "" {
+//		return fmt.Sprintf("postgresql://%s:%s@%s", dbUser, dbPassword, dbURL)
+//	}
+//	return defaultDBSource
+//}
