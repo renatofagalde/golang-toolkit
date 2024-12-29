@@ -259,7 +259,23 @@ func (t *Tools) ErrorXML(w http.ResponseWriter, err error, status ...int) error 
 	return t.WriteXML(w, statusCode, payload)
 }
 
-func (t *Tools) LoadConfig(path string) (config Config, err error) {
+func (t *Tools) LoadConfigFile(path string) (config Config, err error) {
+	viper.AddConfigPath(path)
+	viper.SetConfigName("app")
+	viper.SetConfigType("env")
+
+	viper.AutomaticEnv()
+	err = viper.ReadInConfig()
+	if err != nil {
+		return
+	}
+	err = viper.Unmarshal(&config)
+
+	config.DBSource = t.buildDBSource(config.DBSource)
+	return
+}
+
+func (t *Tools) LoadConfigEnv() (config Config, err error) {
 	config.DBDriver = os.Getenv("DB_DRIVER")
 	config.DBSource = os.Getenv("DB_SOURCE")
 	config.ServerAddress = os.Getenv("SERVER_ADDRESS")
