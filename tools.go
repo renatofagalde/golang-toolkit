@@ -260,16 +260,34 @@ func (t *Tools) ErrorXML(w http.ResponseWriter, err error, status ...int) error 
 }
 
 func (t *Tools) LoadConfig(path string) (config Config, err error) {
-	viper.AddConfigPath(path)
-	viper.SetConfigName("app")
-	viper.SetConfigType("env")
+	config.DBDriver = os.Getenv("DB_DRIVER")
+	config.DBSource = os.Getenv("DB_SOURCE")
+	config.ServerAddress = os.Getenv("SERVER_ADDRESS")
+	config.TokenSymmetricKey = os.Getenv("TOKEN_SYMMETRIC_KEY")
+	config.AccessTokenDuration = os.Getenv("ACCESS_TOKEN_DURATION")
 
-	viper.AutomaticEnv()
-	err = viper.ReadInConfig()
-	if err != nil {
+	// Validar se os valores obrigatórios foram carregados
+	missing := []string{}
+	if config.DBDriver == "" {
+		missing = append(missing, "DB_DRIVER")
+	}
+	if config.DBSource == "" {
+		missing = append(missing, "DB_SOURCE")
+	}
+	if config.ServerAddress == "" {
+		missing = append(missing, "SERVER_ADDRESS")
+	}
+	if config.TokenSymmetricKey == "" {
+		missing = append(missing, "TOKEN_SYMMETRIC_KEY")
+	}
+	if config.AccessTokenDuration == "" {
+		missing = append(missing, "ACCESS_TOKEN_DURATION")
+	}
+
+	if len(missing) > 0 {
+		err = fmt.Errorf("variáveis de ambiente obrigatórias não encontradas: %v", missing)
 		return
 	}
-	err = viper.Unmarshal(&config)
 
 	config.DBSource = t.buildDBSource(config.DBSource)
 	return
@@ -280,10 +298,8 @@ func (t *Tools) buildDBSource(defaultDBSource string) string {
 	dbPassword := os.Getenv("app_database_password")
 	dbURL := os.Getenv("app_database_url")
 
-	//todas variaveis definidas
 	if dbUser != "" && dbPassword != "" && dbURL != "" {
 		return fmt.Sprintf("postgresql://%s:%s@%s", dbUser, dbPassword, dbURL)
 	}
-	// caso contrário, retorne o valor padrão do arquivo de configuração
 	return defaultDBSource
 }
