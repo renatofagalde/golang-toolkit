@@ -306,7 +306,7 @@ func (t *Tools) LoadConfigEnv() (config Config, err error) {
 	}
 
 	if len(missing) > 0 {
-		err = fmt.Errorf("variáveis de ambiente obrigatórias não encontradas: %v", missing)
+		err = fmt.Errorf("cannot get envs: %v", missing)
 		return
 	}
 	return
