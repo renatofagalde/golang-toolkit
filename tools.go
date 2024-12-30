@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/spf13/viper"
 	"io"
 	"net/http"
 	"os"
@@ -258,67 +259,29 @@ func (t *Tools) ErrorXML(w http.ResponseWriter, err error, status ...int) error 
 	return t.WriteXML(w, statusCode, payload)
 }
 
-//func (t *Tools) LoadConfigFile(path string) (config Config, err error) {
-//	viper.AddConfigPath(path)
-//	viper.SetConfigName("app")
-//	viper.SetConfigType("env")
-//
-//	viper.AutomaticEnv()
-//	err = viper.ReadInConfig()
-//	if err != nil {
-//		return
-//	}
-//	err = viper.Unmarshal(&config)
-//
-//	config.DBSource = t.buildDBSource(config.DBSource)
-//	return
-//}
+func (t *Tools) LoadConfigFile(path string) (config Config, err error) {
+	viper.AddConfigPath(path)
+	viper.SetConfigName("app")
+	viper.SetConfigType("env")
 
-func (t *Tools) LoadConfigEnv() (config Config, err error) {
-	config.DBDriver = os.Getenv("DB_DRIVER")
-	config.DBSource = os.Getenv("DB_SOURCE")
-	config.ServerAddress = os.Getenv("SERVER_ADDRESS")
-	config.TokenSymmetricKey = os.Getenv("TOKEN_SYMMETRIC_KEY")
-	accessTokenDuration := os.Getenv("ACCESS_TOKEN_DURATION")
-
-	missing := []string{}
-
-	if accessTokenDuration != "" {
-		config.AccessTokenDuration, err = time.ParseDuration(accessTokenDuration)
-		if err != nil {
-			return config, fmt.Errorf("erro ao converter ACCESS_TOKEN_DURATION para time.Duration: %v", err)
-		}
-	} else {
-		missing = append(missing, "ACCESS_TOKEN_DURATION")
-	}
-
-	if config.DBDriver == "" {
-		missing = append(missing, "DB_DRIVER")
-	}
-	if config.DBSource == "" {
-		missing = append(missing, "DB_SOURCE")
-	}
-	if config.ServerAddress == "" {
-		missing = append(missing, "SERVER_ADDRESS")
-	}
-	if config.TokenSymmetricKey == "" {
-		missing = append(missing, "TOKEN_SYMMETRIC_KEY")
-	}
-
-	if len(missing) > 0 {
-		err = fmt.Errorf("cannot get envs: %v", missing)
+	viper.AutomaticEnv()
+	err = viper.ReadInConfig()
+	if err != nil {
 		return
 	}
+	err = viper.Unmarshal(&config)
+
+	config.DBSource = t.buildDBSource(config.DBSource)
 	return
 }
 
-//func (t *Tools) buildDBSource(config *Config) string {
-//	dbUser := os.Getenv("app_database_user")
-//	dbPassword := os.Getenv("app_database_password")
-//	dbURL := os.Getenv("app_database_url")
-//
-//	if dbUser != "" && dbPassword != "" && dbURL != "" {
-//		return fmt.Sprintf("postgresql://%s:%s@%s", dbUser, dbPassword, dbURL)
-//	}
-//	return defaultDBSource
-//}
+func (t *Tools) buildDBSource(defaultDBSource string) string {
+	dbUser := os.Getenv("app_database_user")
+	dbPassword := os.Getenv("app_database_password")
+	dbURL := os.Getenv("app_database_url")
+
+	if dbUser != "" && dbPassword != "" && dbURL != "" {
+		return fmt.Sprintf("postgresql://%s:%s@%s", dbUser, dbPassword, dbURL)
+	}
+	return defaultDBSource
+}
