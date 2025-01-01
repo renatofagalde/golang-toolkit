@@ -300,7 +300,6 @@ func (t *Tools) LoadConfigEnv() (config Config, err error) {
 	}
 
 	config.DBSource = t.buildDBSource(config.DBSource)
-
 	return
 }
 
