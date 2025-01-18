@@ -44,6 +44,10 @@ func (t *Logger) Info(message string, tags ...zap.Field) {
 	log.Info(message, tags...)
 	log.Sync()
 }
+func (t *Logger) Warn(message string, tags ...zap.Field) {
+	log.Warn(message, tags...)
+	log.Sync()
+}
 func (t *Logger) Error(message string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
 	log.Error(message, tags...)
@@ -66,6 +70,8 @@ func getLevelLogs() zapcore.Level {
 		return zapcore.ErrorLevel
 	case "debug":
 		return zapcore.DebugLevel
+	case "warn":
+		return zapcore.WarnLevel
 	default:
 		return zapcore.InfoLevel
 	}
