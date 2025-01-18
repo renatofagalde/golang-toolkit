@@ -151,7 +151,7 @@ func (t *RestErr) NewDataIntegrityError(message string, causes []Cause) *RestErr
 	}
 }
 
-func HandlePgError(pgErr *pgconn.PgError, journey, requestID string, logger *zap.Logger) *RestErr {
+func (t *RestErr) HandlePgError(pgErr *pgconn.PgError, journey, requestID string, logger *zap.Logger) *RestErr {
 	// Log the error details
 	logger.Warn("Database error",
 		zap.String("stage", "repository"),
