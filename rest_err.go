@@ -2,10 +2,13 @@ package toolkit
 
 import (
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/renatofagalde/golang-toolkit/context_manager"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 )
+
+var logger Logger
 
 type RestErr struct {
 	Message string  `json:"message"`
@@ -151,8 +154,10 @@ func (t *RestErr) NewDataIntegrityError(message string, causes []Cause) *RestErr
 	}
 }
 
-func (t *RestErr) HandlePgError(pgErr *pgconn.PgError, journey, requestID string, logger *zap.Logger) *RestErr {
-	// Log the error details
+func (t *RestErr) HandlePgError(pgErr *pgconn.PgError) *RestErr {
+
+	journey, requestID := context_manager.Give()
+
 	logger.Warn("Database error",
 		zap.String("stage", "repository"),
 		zap.String("journey", journey),
@@ -163,14 +168,12 @@ func (t *RestErr) HandlePgError(pgErr *pgconn.PgError, journey, requestID string
 		zap.String("pg_error_where", pgErr.Where),
 	)
 
-	// Prepare the causes
 	cause := Cause{
 		Field:   pgErr.Code,
 		Message: pgErr.Message,
 	}
 	causes := []Cause{cause}
 
-	// Determine the appropriate error based on the PostgreSQL error code
 	switch pgErr.Code {
 	case "23505": // Unique violation
 		return (&RestErr{}).NewConflictError("Duplicate key error while inserting user", causes)
