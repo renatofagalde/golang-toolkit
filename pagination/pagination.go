@@ -28,6 +28,7 @@ func Paginate(ctx *gin.Context) func(db *gorm.DB) *gorm.DB {
 		ctx.Set("page", page)
 		ctx.Set("pageSize", pageSize)
 		ctx.Set("totalPages", totalPages)
+		ctx.Set("totalItems", total)
 		offset := (page - 1) * pageSize
 
 		return db.Offset(offset).Limit(pageSize)
