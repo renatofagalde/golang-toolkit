@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func RequestMiddleware() gin.HandlerFunc {
+func RequestMiddlewareContext() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
@@ -36,7 +36,7 @@ func RequestMiddleware() gin.HandlerFunc {
 	}
 }
 
-func ContextGin() gin.HandlerFunc {
+func RequestMiddlewareGin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		Set(c.Request.Context(), c)
 		c.Next()
