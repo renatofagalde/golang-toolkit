@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"math"
 	"strconv"
 )
 
@@ -10,6 +11,15 @@ func Paginate(ctx *gin.Context) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		page := getPage(ctx)
 		pageSize := getPageSize(ctx)
+
+		clone := db.Session(&gorm.Session{})
+		var total int64
+		clone.Count(&total)
+
+		totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
+		ctx.Set("page", page)
+		ctx.Set("pageSize", pageSize)
+		ctx.Set("totalPages", totalPages)
 		offset := (page - 1) * pageSize
 
 		return db.Offset(offset).Limit(pageSize)
