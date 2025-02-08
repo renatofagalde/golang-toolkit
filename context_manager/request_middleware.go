@@ -29,9 +29,16 @@ func RequestMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		Set(c.Request.Context())
+		Set(c.Request.Context(), c)
 
 		c.Next()
 
+	}
+}
+
+func ContextGin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		Set(c.Request.Context(), c)
+		c.Next()
 	}
 }

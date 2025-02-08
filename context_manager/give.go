@@ -1,7 +1,6 @@
 package context_manager
 
 import (
-	"context"
 	"fmt"
 )
 
@@ -11,22 +10,32 @@ const (
 )
 
 func Give() (journey, requestID string) {
+	ginCtx := GetGinContext()
+	if ginCtx != nil {
+		if j, exists := ginCtx.Get(X_REQUEST_JOURNEY); exists {
+			journey = j.(string)
+		}
+		if id, exists := ginCtx.Get(X_REQUEST_ID); exists {
+			requestID = id.(string)
+		}
+	}
+
 	ctx := Get()
 	if ctx == nil {
 		fmt.Println("Context is nil, defaulting to background context")
-		ctx = context.Background()
+		ctx = ginCtx.Request.Context()
 	}
 
-	if j, ok := ctx.Value(X_REQUEST_JOURNEY).(string); ok {
-		journey = j
-	} else {
-		journey = ""
+	if journey == "" {
+		if j, ok := ctx.Value(X_REQUEST_JOURNEY).(string); ok {
+			journey = j
+		}
 	}
 
-	if id, ok := ctx.Value(X_REQUEST_ID).(string); ok {
-		requestID = id
-	} else {
-		requestID = ""
+	if requestID == "" {
+		if id, ok := ctx.Value(X_REQUEST_ID).(string); ok {
+			requestID = id
+		}
 	}
 
 	return journey, requestID
