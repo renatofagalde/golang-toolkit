@@ -7,6 +7,14 @@ import (
 	"strconv"
 )
 
+type Pagination[T any] struct {
+	TotalPages int   `json:"totalPages"`
+	Page       int   `json:"page"`
+	PageSize   int   `json:"pageSize"`
+	TotalItems int64 `json:"totalItems"`
+	Contents   []T   `json:"contents"`
+}
+
 func Paginate(ctx *gin.Context) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		page := getPage(ctx)
