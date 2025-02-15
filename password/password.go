@@ -1,11 +1,12 @@
-package toolkit
+package password
 
 import (
+	"github.com/renatofagalde/golang-toolkit"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type PasswordCrypt interface {
-	HashPassword(password string) (string, *RestErr)
+	HashPassword(password string) (string, *toolkit.RestErr)
 	CheckPassword(hashedPassword string, password string) error
 }
 
@@ -16,11 +17,11 @@ func NewPassword() PasswordCrypt {
 	return &Password{}
 }
 
-func (t *Password) HashPassword(password string) (string, *RestErr) {
+func (t *Password) HashPassword(password string) (string, *toolkit.RestErr) {
 
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return "", (&RestErr{}).NewBadRequestError("failed to hash password")
+		return "", (&toolkit.RestErr{}).NewBadRequestError("failed to hash password")
 	}
 
 	return string(hashPassword), nil
