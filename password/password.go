@@ -7,7 +7,7 @@ import (
 
 type PasswordCrypt interface {
 	HashPassword(password string) (string, *toolkit.RestErr)
-	CheckPassword(hashedPassword string, password string) error
+	CheckPassword(hashedPassword string, password string) *toolkit.RestErr
 }
 
 type Password struct {
@@ -27,6 +27,17 @@ func (t *Password) HashPassword(password string) (string, *toolkit.RestErr) {
 	return string(hashPassword), nil
 }
 
-func (t *Password) CheckPassword(hashedPassword string, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+func (t *Password) CheckPassword(hashedPassword string, password string) *toolkit.RestErr {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if err != nil {
+		restErr := toolkit.RestErr{}
+		causes := []toolkit.Cause{
+			{
+				Field:   "password",
+				Message: err.Error(),
+			},
+		}
+		return restErr.NewRestErr("invalid credentials", "invalid_password", 400, causes)
+	}
+	return nil
 }
