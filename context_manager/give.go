@@ -1,5 +1,11 @@
 package context_manager
 
+const (
+	X_REQUEST_ID      = "X-Request-ID"
+	X_REQUEST_JOURNEY = "X-Request-Journey"
+)
+
+// 20250305
 func Give() (journey, requestID string) {
 	ginCtx := GetGinContext()
 	if ginCtx == nil {
