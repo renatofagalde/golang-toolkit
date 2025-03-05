@@ -6,18 +6,17 @@ import (
 )
 
 func Get() context.Context {
+	ginCtx := GetGinContext()
+	if ginCtx != nil {
+		return ginCtx.Request.Context()
+	}
 	return context.Background()
 }
 
 func GetGinContext() *gin.Context {
-	ctx := Get()
-	if ctx == nil {
-		return nil
+	ginCtx, exists := context.WithValue(context.Background(), CTX_KEY, nil).Value(CTX_KEY).(*gin.Context)
+	if exists {
+		return ginCtx
 	}
-
-	ginCtx, ok := ctx.Value(CTX_KEY).(*gin.Context)
-	if !ok {
-		return nil
-	}
-	return ginCtx
+	return nil
 }

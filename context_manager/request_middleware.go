@@ -37,6 +37,7 @@ func RequestMiddlewareContext() gin.HandlerFunc {
 		// Armazena o contexto da requisição no próprio gin.Context
 		ctx := context.WithValue(c.Request.Context(), CTX_KEY, c)
 		c.Request = c.Request.WithContext(ctx)
+		c.Set(CTX_KEY, c)
 
 		c.Next()
 	}
