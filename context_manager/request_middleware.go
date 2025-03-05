@@ -1,15 +1,20 @@
 package context_manager
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/renatofagalde/golang-toolkit/context_manager/header_validators"
 	"net/http"
 )
 
+const (
+	X_REQUEST_ID      = "X-Request-ID"
+	X_REQUEST_JOURNEY = "X-Request-Journey"
+	CTX_KEY           = "CTX_KEY"
+)
+
 func RequestMiddlewareContext() gin.HandlerFunc {
-
 	return func(c *gin.Context) {
-
 		errors := make(chan string, 2)
 		go header_validators.ValidateID(c, errors)
 		go header_validators.ValidateJourney(c, errors)
@@ -29,16 +34,10 @@ func RequestMiddlewareContext() gin.HandlerFunc {
 			return
 		}
 
-		Set(c.Request.Context(), c)
+		// Armazena o contexto da requisição no próprio gin.Context
+		ctx := context.WithValue(c.Request.Context(), CTX_KEY, c)
+		c.Request = c.Request.WithContext(ctx)
 
-		c.Next()
-
-	}
-}
-
-func RequestMiddlewareGin() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		Set(c.Request.Context(), c)
 		c.Next()
 	}
 }

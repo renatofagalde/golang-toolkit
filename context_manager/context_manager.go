@@ -2,34 +2,22 @@ package context_manager
 
 import (
 	"context"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"sync"
 )
-
-var (
-	globalContext context.Context
-	globalGinCtx  *gin.Context
-	mutex         sync.RWMutex
-)
-
-func Set(ctx context.Context, ginCtx *gin.Context) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	globalContext = ctx
-	globalGinCtx = ginCtx
-	fmt.Sprint("set mutext")
-}
 
 func Get() context.Context {
-	mutex.RLock()
-	defer mutex.RUnlock()
-	fmt.Sprint("unlock mutext")
-	return globalContext
+	return context.Background()
 }
 
 func GetGinContext() *gin.Context {
-	mutex.RLock()
-	defer mutex.RUnlock()
-	return globalGinCtx
+	ctx := Get()
+	if ctx == nil {
+		return nil
+	}
+
+	ginCtx, ok := ctx.Value(CTX_KEY).(*gin.Context)
+	if !ok {
+		return nil
+	}
+	return ginCtx
 }
