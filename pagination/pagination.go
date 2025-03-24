@@ -1,50 +1,64 @@
-package config
+package pagination
 
 import (
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"context"
 	"math"
 	"strconv"
+
+	"gorm.io/gorm"
 )
 
-type Pagination[T any] struct {
-	TotalPages int   `json:"totalPages"`
-	Page       int   `json:"page"`
-	PageSize   int   `json:"pageSize"`
-	TotalItems int64 `json:"totalItems"`
-	Contents   []T   `json:"contents"`
-}
+type ctxKey string
 
-func Paginate(ctx *gin.Context) func(db *gorm.DB) *gorm.DB {
+const (
+	pageKey       ctxKey = "page"
+	pageSizeKey   ctxKey = "pageSize"
+	totalKey      ctxKey = "totalItems"
+	totalPagesKey ctxKey = "totalPages"
+)
+
+func Paginate(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		page := getPage(ctx)
-		pageSize := getPageSize(ctx)
+		page := ctx.Value(pageKey).(int)
+		pageSize := ctx.Value(pageSizeKey).(int)
 
 		clone := db.Session(&gorm.Session{})
 		var total int64
 		clone.Count(&total)
 
 		totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
-		ctx.Set("page", page)
-		ctx.Set("pageSize", pageSize)
-		ctx.Set("totalPages", totalPages)
-		ctx.Set("totalItems", total)
-		offset := (page - 1) * pageSize
 
+		if setter, ok := ctx.(interface {
+			Set(string, any)
+		}); ok {
+			setter.Set("totalItems", total)
+			setter.Set("totalPages", totalPages)
+		}
+
+		offset := (page - 1) * pageSize
 		return db.Offset(offset).Limit(pageSize)
 	}
 }
 
-func getPage(ctx *gin.Context) int {
-	p, err := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+func AddPaginationToContext(ctx context.Context, pageStr, pageSizeStr string) context.Context {
+	page := parsePage(pageStr)
+	pageSize := parsePageSize(pageSizeStr)
+
+	ctx = context.WithValue(ctx, pageKey, page)
+	ctx = context.WithValue(ctx, pageSizeKey, pageSize)
+	return ctx
+}
+
+func parsePage(value string) int {
+	p, err := strconv.Atoi(value)
 	if err != nil || p <= 0 {
 		return 1
 	}
 	return p
 }
 
-func getPageSize(ctx *gin.Context) int {
-	ps, err := strconv.Atoi(ctx.DefaultQuery("page_size", "100"))
+func parsePageSize(value string) int {
+	ps, err := strconv.Atoi(value)
 	if err != nil {
 		ps = 100
 	}
