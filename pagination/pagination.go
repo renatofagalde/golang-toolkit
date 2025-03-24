@@ -1,4 +1,4 @@
-package pagination
+package utils
 
 import (
 	"context"
@@ -19,8 +19,8 @@ const (
 
 func Paginate(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		page := ctx.Value(pageKey).(int)
-		pageSize := ctx.Value(pageSizeKey).(int)
+		page := getPage(ctx)
+		pageSize := getPageSize(ctx)
 
 		clone := db.Session(&gorm.Session{})
 		var total int64
@@ -28,37 +28,30 @@ func Paginate(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 
 		totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
 
-		if setter, ok := ctx.(interface {
-			Set(string, any)
-		}); ok {
-			setter.Set("totalItems", total)
-			setter.Set("totalPages", totalPages)
-		}
+		// Contexto padrão não tem Set, mas você pode usar outro mecanismo aqui.
+		// Como não pode quebrar retrocompatibilidade, apenas guardamos esses valores em context (se necessário)
+		ctx = context.WithValue(ctx, totalKey, total)
+		ctx = context.WithValue(ctx, totalPagesKey, totalPages)
+		ctx = context.WithValue(ctx, pageKey, page)
+		ctx = context.WithValue(ctx, pageSizeKey, pageSize)
 
 		offset := (page - 1) * pageSize
 		return db.Offset(offset).Limit(pageSize)
 	}
 }
 
-func AddPaginationToContext(ctx context.Context, pageStr, pageSizeStr string) context.Context {
-	page := parsePage(pageStr)
-	pageSize := parsePageSize(pageSizeStr)
-
-	ctx = context.WithValue(ctx, pageKey, page)
-	ctx = context.WithValue(ctx, pageSizeKey, pageSize)
-	return ctx
-}
-
-func parsePage(value string) int {
-	p, err := strconv.Atoi(value)
+func getPage(ctx context.Context) int {
+	raw := getQueryValue(ctx, "page", "1")
+	p, err := strconv.Atoi(raw)
 	if err != nil || p <= 0 {
 		return 1
 	}
 	return p
 }
 
-func parsePageSize(value string) int {
-	ps, err := strconv.Atoi(value)
+func getPageSize(ctx context.Context) int {
+	raw := getQueryValue(ctx, "page_size", "100")
+	ps, err := strconv.Atoi(raw)
 	if err != nil {
 		ps = 100
 	}
@@ -69,4 +62,13 @@ func parsePageSize(value string) int {
 		ps = 10
 	}
 	return ps
+}
+
+func getQueryValue(ctx context.Context, key string, defaultVal string) string {
+	if v := ctx.Value(ctxKey(key)); v != nil {
+		if str, ok := v.(string); ok {
+			return str
+		}
+	}
+	return defaultVal
 }
